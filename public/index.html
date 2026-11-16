@@ -89,10 +89,10 @@ background-image:repeating-linear-gradient(transparent 0 37px,light-dark(#f0e6e6
 .row input{flex:1;font-size:18px}
 .acc{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 .acc button{min-width:44px;min-height:40px;border:1.5px solid var(--line);background:var(--soft);border-radius:8px;cursor:pointer;font-size:17px}
-.fb{min-height:56px;margin-top:14px;padding:12px 16px;border-radius:12px;font-weight:500;display:none}
-.fb.ok{display:block;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
-.fb.no{display:block;background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad)}
-.fb.mid{display:block;background:color-mix(in srgb,var(--sun) 25%,transparent)}
+.fb{min-height:50px;margin:0 0 12px;padding:12px 16px;border-radius:12px;font-weight:500;visibility:hidden;text-align:center}
+.fb.ok{visibility:visible;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.fb.no{visibility:visible;background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad)}
+.fb.mid{visibility:visible;background:color-mix(in srgb,var(--sun) 25%,transparent)}
 .fb b{color:var(--ink)}
 .opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .opts button{min-height:64px;padding:10px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--soft);cursor:pointer;font-size:17px;font-weight:500;text-align:left}
@@ -145,9 +145,10 @@ body{-webkit-tap-highlight-color:transparent}
  .deck{height:min(58vh,360px)}
  .rate{gap:8px}.rate .btn{min-height:60px;padding:0 6px}
  .panel{padding:20px 16px;border-radius:18px}
- .row{flex-wrap:wrap}.row .btn{flex:1 0 100%}
+ .row .btn{padding:0 14px}.q{margin-bottom:12px}.q .word{font-size:34px}.fb{font-size:15px;padding:10px 12px}.big{width:76px;height:76px;margin-bottom:12px}
 }
 @media(min-width:601px){nav a svg{display:none}}
+@media(max-width:600px){body.typing nav{display:none}}
 </style>
 </head>
 <body>
@@ -195,9 +196,9 @@ body{-webkit-tap-highlight-color:transparent}
  <section class="view" id="v-schreiben">
   <div class="panel">
    <div class="q"><div class="cnt" id="wDir"></div><div class="word" id="wQ"></div></div>
+   <div class="fb" id="wFb"></div>
    <form id="wForm" class="row" autocomplete="off"><input type="text" id="wIn" enterkeyhint="go" autocorrect="off" placeholder="Übersetzung eintippen" autocapitalize="off" spellcheck="false"><button class="btn p" id="wBtn">Prüfen</button></form>
    <div class="acc" id="wAcc"></div>
-   <div class="fb" id="wFb"></div>
    <div class="score"><span>Richtig <b id="wOk">0</b></span><span>Falsch <b id="wNo">0</b></span><button class="btn" id="wSkip" type="button" style="min-height:36px;padding:0 12px">Zeigen</button></div>
   </div>
   <p class="note">Artikel sind optional. Fehlende Akzente zählen als richtig, werden aber angemerkt.</p>
@@ -215,9 +216,9 @@ body{-webkit-tap-highlight-color:transparent}
  <section class="view" id="v-hoeren">
   <div class="panel">
    <button class="big" id="hPlay" aria-label="Wort abspielen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></button>
+   <div class="fb" id="hFb"></div>
    <form id="hForm" class="row" autocomplete="off"><input type="text" id="hIn" enterkeyhint="go" autocorrect="off" placeholder="Was hörst du? (italienisch)" autocapitalize="off" spellcheck="false"><button class="btn p" id="hBtn">Prüfen</button></form>
    <div class="acc" id="hAcc"></div>
-   <div class="fb" id="hFb"></div>
    <div class="score"><span>Richtig <b id="hOk">0</b></span><span>Falsch <b id="hNo">0</b></span><button class="btn" id="hSlow" type="button" style="min-height:36px;padding:0 12px">Langsam</button></div>
   </div>
   <p class="note" id="hNote">Diktat: hören, schreiben, Rechtschreibung trainieren. Nutzt die italienische Stimme deines Geräts.</p>
@@ -460,6 +461,8 @@ document.addEventListener('keydown',e=>{
 let armed=false;
 $('reset').onclick=()=>{const b=$('reset');if(!armed){armed=true;b.textContent='Wirklich alles löschen?';b.classList.add('b');setTimeout(()=>{armed=false;b.textContent='Fortschritt zurücksetzen';b.classList.remove('b')},4000);return}
  S.b={};S.u={};S.r=Date.now();save();sync();armed=false;b.textContent='Fortschritt zurücksetzen';b.classList.remove('b');prog();refresh()};
+['wIn','hIn'].forEach(id=>$(id).addEventListener('blur',()=>document.body.classList.remove('typing')));
+['wIn','hIn'].forEach(id=>$(id).addEventListener('focus',()=>{document.body.classList.add('typing');if(innerWidth<=600)setTimeout(()=>$(id).closest('.panel').scrollIntoView({block:'start',behavior:'smooth'}),250)}));
 prog();route();sync();
 }
 </script>
