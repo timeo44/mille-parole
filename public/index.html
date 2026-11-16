@@ -195,7 +195,7 @@ body{-webkit-tap-highlight-color:transparent}
  <section class="view" id="v-schreiben">
   <div class="panel">
    <div class="q"><div class="cnt" id="wDir"></div><div class="word" id="wQ"></div></div>
-   <form id="wForm" class="row" autocomplete="off"><input type="text" id="wIn" placeholder="Übersetzung eintippen" autocapitalize="off" spellcheck="false"><button class="btn p" id="wBtn">Prüfen</button></form>
+   <form id="wForm" class="row" autocomplete="off"><input type="text" id="wIn" enterkeyhint="go" autocorrect="off" placeholder="Übersetzung eintippen" autocapitalize="off" spellcheck="false"><button class="btn p" id="wBtn">Prüfen</button></form>
    <div class="acc" id="wAcc"></div>
    <div class="fb" id="wFb"></div>
    <div class="score"><span>Richtig <b id="wOk">0</b></span><span>Falsch <b id="wNo">0</b></span><button class="btn" id="wSkip" type="button" style="min-height:36px;padding:0 12px">Zeigen</button></div>
@@ -215,7 +215,7 @@ body{-webkit-tap-highlight-color:transparent}
  <section class="view" id="v-hoeren">
   <div class="panel">
    <button class="big" id="hPlay" aria-label="Wort abspielen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></button>
-   <form id="hForm" class="row" autocomplete="off"><input type="text" id="hIn" placeholder="Was hörst du? (italienisch)" autocapitalize="off" spellcheck="false"><button class="btn p" id="hBtn">Prüfen</button></form>
+   <form id="hForm" class="row" autocomplete="off"><input type="text" id="hIn" enterkeyhint="go" autocorrect="off" placeholder="Was hörst du? (italienisch)" autocapitalize="off" spellcheck="false"><button class="btn p" id="hBtn">Prüfen</button></form>
    <div class="acc" id="hAcc"></div>
    <div class="fb" id="hFb"></div>
    <div class="score"><span>Richtig <b id="hOk">0</b></span><span>Falsch <b id="hNo">0</b></span><button class="btn" id="hSlow" type="button" style="min-height:36px;padding:0 12px">Langsam</button></div>
@@ -373,7 +373,8 @@ function wCheck(give){
  if(r===2){fb.className='fb ok';fb.innerHTML='Richtig! '+sol;wOk++;setBox(wCur.i,box(wCur.i)+1)}
  else if(r===1){fb.className='fb mid';fb.innerHTML='Fast – achte auf die Akzente: '+sol;wOk++;setBox(wCur.i,Math.max(2,box(wCur.i)))}
  else{fb.className='fb no';fb.innerHTML=(give?'Lösung: ':'Leider nicht. Richtig: ')+sol;wNo++;setBox(wCur.i,1)}
- autoSay(wCur.it);$('wOk').textContent=wOk;$('wNo').textContent=wNo;$('wBtn').focus({preventScroll:true});
+ autoSay(wCur.it);$('wOk').textContent=wOk;$('wNo').textContent=wNo;$('wIn').focus({preventScroll:true});
+ if(r>0){const c=wCur;setTimeout(()=>{if(wDone&&wCur===c&&view==='schreiben')wNext()},r===2?900:1800)}
 }
 $('wForm').addEventListener('submit',e=>{e.preventDefault();wCheck(false)});
 $('wSkip').onclick=()=>{if(!wDone)wCheck(true);else wNext()};
@@ -411,7 +412,8 @@ function hCheck(){
  if(r===2){fb.className='fb ok';fb.innerHTML='Perfetto! '+sol;hOk++;setBox(hCur.i,box(hCur.i)+1)}
  else if(r===1){fb.className='fb mid';fb.innerHTML='Fast – Akzente beachten: '+sol;hOk++}
  else{fb.className='fb no';fb.innerHTML='Gehört wurde: '+sol;hNo++;setBox(hCur.i,1)}
- $('hOk').textContent=hOk;$('hNo').textContent=hNo;$('hBtn').focus({preventScroll:true});
+ $('hOk').textContent=hOk;$('hNo').textContent=hNo;$('hIn').focus({preventScroll:true});
+ if(r>0){const c=hCur;setTimeout(()=>{if(hDone&&hCur===c&&view==='hoeren'){hNext();speak(hCur.it)}},r===2?1100:2000)}
 }
 $('hForm').addEventListener('submit',e=>{e.preventDefault();hCheck()});
 $('hPlay').onclick=()=>{speak(hCur.it);$('hIn').focus({preventScroll:true})};
@@ -452,7 +454,7 @@ function route(){
 window.addEventListener('hashchange',route);
 document.addEventListener('keydown',e=>{
  if(e.target.matches('input,select,textarea'))return;
- if(view==='karten'){if(e.key===' '){e.preventDefault();flipIt()}else if(['1','2','3'].includes(e.key))rate(+e.key-1);else if(e.key==='s'||e.key==='S')speak(cur.it)}
+ if(view==='karten'){if(e.key===' '||e.key==='Enter'){e.preventDefault();flipIt()}else if(['1','2','3'].includes(e.key))rate(+e.key-1);else if(e.key==='s'||e.key==='S')speak(cur.it)}
  if(view==='quiz'){if(['1','2','3','4'].includes(e.key))qPick(+e.key-1);else if(e.key==='Enter'&&qDone)qNext()}
 });
 let armed=false;
