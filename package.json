@@ -1,0 +1,7 @@
+{
+  "name": "mille-parole",
+  "private": true,
+  "dependencies": {
+    "@netlify/blobs": "latest"
+  }
+}

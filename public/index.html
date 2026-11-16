@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#d6322a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mille parole">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<title>Mille parole</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: lively Italian classroom, focused and quick
+   IDEA: a stack of index cards on a tomato-red school desk
+   PICTURE: the live flashcard itself, big, with the next cards peeking behind
+   COLOUR and TYPE: tomato red field, white cards, ink; sunflower accent; Instrument Serif for Italian, Inter for UI
+   LAYOUT: red band with title + progress, mode tabs, the working card, then controls */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#141113);--ink:light-dark(#1a1517,#f3ecea);--mute:light-dark(#6c6266,#b3a8ab);
+--red:light-dark(#d6322a,#b82a23);--red2:light-dark(#b0241d,#8f1f1a);--sun:#f6c445;
+--card:light-dark(#ffffff,#221c1f);--line:light-dark(#e8e1e2,#3a3135);--soft:light-dark(#f6f1f1,#1c1719);
+--ok:light-dark(#1d7a45,#5fd393);--bad:light-dark(#c0261f,#ff7a70)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+button,input,select{font:inherit;color:inherit}
+.it{font-family:"Instrument Serif",Georgia,serif;font-weight:400}
+header{background:var(--red);color:#fff;padding:clamp(22px,3.5vw,44px) max(5vw,16px) 0}
+.top{max-width:1100px;margin:auto;display:flex;flex-wrap:wrap;gap:16px 32px;align-items:end;justify-content:space-between}
+h1{margin:0;font-size:clamp(40px,6vw,58px);line-height:1.02;font-family:"Instrument Serif",serif;font-weight:400;text-wrap:balance}
+h1 i{color:var(--sun)}
+.sub{margin:6px 0 0;opacity:.9;font-size:15px}
+.prog{min-width:260px;flex:0 1 380px}
+.prog b{font-size:28px;font-weight:700}.prog small{opacity:.85;font-size:14px}
+.bar{height:10px;background:rgba(255,255,255,.25);border-radius:6px;overflow:hidden;display:flex;margin-top:8px}
+.bar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin-top:6px;opacity:.95}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+nav{max-width:1100px;margin:22px auto 0;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav a{flex-shrink:0;color:#fff;text-decoration:none;padding:12px 18px;border-radius:12px 12px 0 0;font-weight:600;font-size:15px;white-space:nowrap;opacity:.85}
+nav a:hover{opacity:1;background:rgba(255,255,255,.12)}
+nav a.on{background:var(--bg);color:var(--ink);opacity:1}
+main{max-width:1100px;margin:auto;padding:22px max(5vw,16px) 60px}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:22px}
+.ctl label{font-size:14px;color:var(--mute);display:flex;gap:8px;align-items:center}
+select,input[type=text],input[type=search]{min-height:44px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;font-size:16px}
+select:focus,input:focus,button:focus-visible,a:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--card);min-height:42px;padding:0 14px;cursor:pointer;font-weight:600;font-size:14px}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.chk{min-height:44px;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--red)}
+.btn{min-height:46px;padding:0 20px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);cursor:pointer;font-weight:600}
+.btn:hover{border-color:var(--ink)}
+.btn.p{background:var(--red);border-color:var(--red);color:#fff}.btn.p:hover{background:var(--red2)}
+.btn.g{background:var(--ok);border-color:var(--ok);color:var(--bg)}
+.btn.b{background:var(--bad);border-color:var(--bad);color:var(--bg)}
+.btn.s{background:var(--sun);border-color:var(--sun);color:#1a1517}
+.show-s{display:none}.view{display:none}.view.on{display:block}
+.stage{position:relative;max-width:640px;margin:0 auto}
+.deck{position:relative;perspective:1400px;height:clamp(260px,42vw,340px)}
+.deck::before,.deck::after{content:"";position:absolute;inset:0;border-radius:22px;background:var(--card);border:1.5px solid var(--line)}
+.deck::before{transform:rotate(-3deg) translate(-6px,8px)}
+.deck::after{transform:rotate(2deg) translate(8px,5px)}
+.flip{position:absolute;inset:0;z-index:2;transition:transform .5s cubic-bezier(.3,.7,.3,1);transform-style:preserve-3d;cursor:pointer}
+.flip.on{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:22px;background:var(--card);border:1.5px solid var(--line);box-shadow:0 18px 40px -18px rgba(60,10,10,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;
+background-image:repeating-linear-gradient(transparent 0 37px,light-dark(#f0e6e6,#2c2427) 37px 38px);background-position:0 70px}
+.face::before{content:"";position:absolute;left:0;right:0;top:56px;height:2px;background:var(--red);opacity:.55}
+.back{transform:rotateY(180deg)}
+.rank{position:absolute;top:16px;left:22px;font-size:13px;color:var(--mute);font-weight:600}
+.lvl{position:absolute;top:16px;right:22px;font-size:13px;font-weight:600}
+.word{font-size:clamp(38px,7vw,60px);line-height:1.08;overflow-wrap:anywhere}
+.de{font-size:clamp(24px,4vw,32px);line-height:1.2;font-weight:600}
+.hint{font-size:14px;color:var(--mute);margin-top:12px}
+.say{position:absolute;bottom:14px;right:16px;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);cursor:pointer;display:grid;place-items:center}
+.say svg{width:20px;height:20px}
+.rate{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:26px}
+.rate .btn{min-height:54px}.rate small{display:block;font-weight:500;font-size:12px;opacity:.85}
+.panel{max-width:640px;margin:0 auto;background:var(--card);border:1.5px solid var(--line);border-radius:22px;padding:clamp(20px,4vw,34px);box-shadow:0 18px 40px -22px rgba(60,10,10,.3)}
+.q{text-align:center;margin-bottom:20px}
+.q .word{font-size:clamp(34px,6vw,52px)}
+.row{display:flex;gap:10px}
+.row input{flex:1;font-size:18px}
+.acc{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.acc button{min-width:44px;min-height:40px;border:1.5px solid var(--line);background:var(--soft);border-radius:8px;cursor:pointer;font-size:17px}
+.fb{min-height:56px;margin-top:14px;padding:12px 16px;border-radius:12px;font-weight:500;display:none}
+.fb.ok{display:block;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.fb.no{display:block;background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad)}
+.fb.mid{display:block;background:color-mix(in srgb,var(--sun) 25%,transparent)}
+.fb b{color:var(--ink)}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opts button{min-height:64px;padding:10px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--soft);cursor:pointer;font-size:17px;font-weight:500;text-align:left}
+.opts button:hover:not(:disabled){border-color:var(--ink)}
+.opts button.r{background:var(--ok);border-color:var(--ok);color:var(--bg)}
+.opts button.w{background:var(--bad);border-color:var(--bad);color:var(--bg)}
+.score{display:flex;justify-content:center;gap:22px;font-size:14px;color:var(--mute);margin-top:18px}
+.score b{color:var(--ink)}
+.big{width:96px;height:96px;border-radius:50%;background:var(--red);color:#fff;border:0;cursor:pointer;display:grid;place-items:center;margin:4px auto 18px;box-shadow:0 10px 24px -10px var(--red)}
+.big svg{width:40px;height:40px}
+.note{font-size:14px;color:var(--mute);text-align:center;margin-top:14px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:13px;color:var(--mute);font-weight:600;padding:8px 10px;border-bottom:2px solid var(--ink)}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n{text-align:right;color:var(--mute);font-variant-numeric:tabular-nums;width:56px}
+td .it{font-size:22px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+.mini{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);cursor:pointer;display:inline-grid;place-items:center}
+.mini svg{width:16px;height:16px}
+.k{border:1.5px solid var(--line);background:var(--card);border-radius:8px;min-height:40px;padding:0 10px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+.k.on{background:var(--ok);border-color:var(--ok);color:var(--bg)}
+.cnt{font-size:14px;color:var(--mute)}
+.empty{text-align:center;padding:40px;color:var(--mute)}
+.keys{font-size:13px;color:var(--mute);text-align:center;margin-top:16px}
+kbd{font:600 12px Inter,sans-serif;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:var(--soft)}
+.foot{font-size:13px;color:var(--mute);margin-top:40px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+@media (prefers-reduced-motion:reduce){.flip{transition:none}}
+@media(max-width:600px){
+ .prog{flex-basis:100%}
+ nav a{padding:11px 13px;font-size:14px}
+ .opts{grid-template-columns:minmax(0,1fr)}
+ .keys{display:none}
+ .hide-s{display:none}.show-s{display:inline!important}
+ td{padding:8px 6px}
+}
+
+header{padding-top:max(clamp(22px,3.5vw,44px),env(safe-area-inset-top))}
+body{-webkit-tap-highlight-color:transparent}
+.logout{color:var(--mute);font-size:13px}
+@media(max-width:600px){
+ header{padding:max(16px,env(safe-area-inset-top)) 16px 18px}
+ h1{font-size:38px}.sub{display:none}
+ .prog b{font-size:22px}
+ nav{position:fixed;left:0;right:0;bottom:0;z-index:50;margin:0;background:var(--bg);border-top:1px solid var(--line);padding:4px 4px max(4px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;box-shadow:0 -6px 20px -12px rgba(0,0,0,.25)}
+ nav a,nav a.on{color:var(--mute);background:none;border-radius:10px;padding:8px 2px;font-size:11px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;opacity:1;white-space:normal;line-height:1.15}
+ nav a.on{color:var(--red)}
+ nav a svg{width:22px;height:22px}
+ main{padding:16px 14px calc(96px + env(safe-area-inset-bottom))}
+ .ctl{gap:8px;margin-bottom:16px}.ctl>label:first-child{flex:1 1 100%}.ctl select{flex:1}
+ .deck{height:min(58vh,360px)}
+ .rate{gap:8px}.rate .btn{min-height:60px;padding:0 6px}
+ .panel{padding:20px 16px;border-radius:18px}
+ .row{flex-wrap:wrap}.row .btn{flex:1 0 100%}
+}
+@media(min-width:601px){nav a svg{display:none}}
+</style>
+</head>
+<body>
+<header>
+ <div class="top">
+  <div>
+   <h1>Mille <i>parole</i></h1>
+   <p class="sub">Die 1000 häufigsten italienischen Wörter: Karteikarten, Schreiben, Quiz und Diktat.</p>
+  </div>
+  <div class="prog" id="prog"></div>
+ </div>
+ <nav id="nav">
+  <a href="#karten" data-v="karten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg><span class="hide-s">Karteikarten</span><span class="show-s">Karten</span></a>
+  <a href="#schreiben" data-v="schreiben"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Schreiben</a>
+  <a href="#quiz" data-v="quiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h10"/></svg><span class="hide-s">Lesen &amp; Quiz</span><span class="show-s">Quiz</span></a>
+  <a href="#hoeren" data-v="hoeren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg>Hören</a>
+  <a href="#liste" data-v="liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg><span class="hide-s">Wortliste</span><span class="show-s">Liste</span></a>
+ </nav>
+</header>
+<main>
+ <div class="ctl" id="ctl">
+  <label>Paket <select id="pack"></select></label>
+  <div class="seg" id="dir"><button data-d="it" class="on">IT → DE</button><button data-d="de">DE → IT</button></div>
+  <label class="chk"><input type="checkbox" id="weak"> nur schwache Wörter</label>
+ </div>
+
+ <section class="view" id="v-karten">
+  <div class="stage">
+   <div class="deck">
+    <div class="flip" id="flip" role="button" tabindex="0" aria-label="Karte umdrehen">
+     <div class="face front"><span class="rank" id="fRank"></span><span class="lvl" id="fLvl"></span><div id="fTxt"></div><div class="hint">Tippen zum Umdrehen</div><button class="say" data-say="front" aria-label="Aussprache"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></button></div>
+     <div class="face back"><span class="rank" id="bRank"></span><div id="bTxt"></div><button class="say" data-say="back" aria-label="Aussprache"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></button></div>
+    </div>
+   </div>
+   <div class="rate">
+    <button class="btn b" data-r="0">Nochmal<small>kam nicht</small></button>
+    <button class="btn s" data-r="1">Schwer<small>mit Mühe</small></button>
+    <button class="btn g" data-r="2">Gewusst<small>sitzt</small></button>
+   </div>
+   <p class="keys"><kbd>Leertaste</kbd> umdrehen · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> bewerten · <kbd>S</kbd> anhören</p>
+  </div>
+ </section>
+
+ <section class="view" id="v-schreiben">
+  <div class="panel">
+   <div class="q"><div class="cnt" id="wDir"></div><div class="word" id="wQ"></div></div>
+   <form id="wForm" class="row" autocomplete="off"><input type="text" id="wIn" placeholder="Übersetzung eintippen" autocapitalize="off" spellcheck="false"><button class="btn p" id="wBtn">Prüfen</button></form>
+   <div class="acc" id="wAcc"></div>
+   <div class="fb" id="wFb"></div>
+   <div class="score"><span>Richtig <b id="wOk">0</b></span><span>Falsch <b id="wNo">0</b></span><button class="btn" id="wSkip" type="button" style="min-height:36px;padding:0 12px">Zeigen</button></div>
+  </div>
+  <p class="note">Artikel sind optional. Fehlende Akzente zählen als richtig, werden aber angemerkt.</p>
+ </section>
+
+ <section class="view" id="v-quiz">
+  <div class="panel">
+   <div class="q"><div class="cnt" id="qDir"></div><div class="word" id="qQ"></div></div>
+   <div class="opts" id="qOpts"></div>
+   <div class="score"><span>Richtig <b id="qOk">0</b></span><span>Falsch <b id="qNo">0</b></span><span>Serie <b id="qStr">0</b></span></div>
+  </div>
+  <p class="keys"><kbd>1</kbd>–<kbd>4</kbd> antworten · <kbd>Enter</kbd> weiter</p>
+ </section>
+
+ <section class="view" id="v-hoeren">
+  <div class="panel">
+   <button class="big" id="hPlay" aria-label="Wort abspielen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></button>
+   <form id="hForm" class="row" autocomplete="off"><input type="text" id="hIn" placeholder="Was hörst du? (italienisch)" autocapitalize="off" spellcheck="false"><button class="btn p" id="hBtn">Prüfen</button></form>
+   <div class="acc" id="hAcc"></div>
+   <div class="fb" id="hFb"></div>
+   <div class="score"><span>Richtig <b id="hOk">0</b></span><span>Falsch <b id="hNo">0</b></span><button class="btn" id="hSlow" type="button" style="min-height:36px;padding:0 12px">Langsam</button></div>
+  </div>
+  <p class="note" id="hNote">Diktat: hören, schreiben, Rechtschreibung trainieren. Nutzt die italienische Stimme deines Geräts.</p>
+ </section>
+
+ <section class="view" id="v-liste">
+  <div class="ctl"><input type="search" id="lSearch" placeholder="Suchen (italienisch oder deutsch)" style="flex:1 1 260px"><span class="cnt" id="lCnt"></span></div>
+  <table><thead><tr><th class="hide-s" style="text-align:right">#</th><th>Italienisch</th><th>Deutsch</th><th></th><th></th></tr></thead><tbody id="lBody"></tbody></table>
+ </section>
+
+ <div class="foot"><span><span id="sync">Lernstand wird synchronisiert …</span> · <a class="logout" href="/logout">Abmelden</a></span><button class="btn" id="reset" style="min-height:40px">Fortschritt zurücksetzen</button></div>
+</main>
+<script>
+{
+const RAW=["di|von, aus", "e|und", "il|der (Artikel m.)", "la|die (Artikel f.)", "che|dass, was, der/die/das (Relativ)", "a|zu, in, an, nach", "non|nicht", "un|ein", "una|eine", "per|für, um zu", "in|in", "è|er/sie/es ist", "essere|sein", "sono|ich bin, sie sind", "mi|mir, mich", "ho|ich habe", "si|sich, man", "con|mit", "lo|ihn, es", "ma|aber", "come|wie", "io|ich", "avere|haben", "da|von, seit, bei", "ti|dir, dich", "se|wenn, ob", "cosa|was, die Sache", "ci|uns, dort", "tu|du", "questo|dieser, das hier", "fare|machen, tun", "mio|mein", "lei|sie, Sie (Höflichkeitsform)", "lui|er", "bene|gut (Adverb)", "no|nein", "sì|ja", "più|mehr", "gli|die (Artikel m. Pl.), ihm", "tutto|alles, ganz", "anche|auch", "ne|davon", "quando|wann, wenn, als", "qui|hier", "già|schon", "così|so", "perché|warum, weil", "molto|sehr, viel", "dove|wo", "solo|nur, allein", "ora|jetzt, die Stunde", "poi|dann", "noi|wir", "voi|ihr", "loro|sie (Plural), ihr", "suo|sein, ihr", "tuo|dein", "nostro|unser", "vostro|euer", "cui|dem, dessen (Relativ)", "quello|jener, das da", "chi|wer", "o|oder", "ancora|noch", "sempre|immer", "mai|nie", "niente|nichts", "nulla|nichts, das Nichts", "ha|er/sie/es hat", "hai|du hast", "abbiamo|wir haben", "hanno|sie haben", "era|er/sie/es war", "c'è|es gibt, da ist", "ci sono|es gibt (Plural)", "fa|macht, vor (zeitlich)", "va|geht", "sta|befindet sich, bleibt", "può|kann", "posso|ich kann", "voglio|ich will", "devo|ich muss", "so|ich weiß", "sai|du weißt", "vado|ich gehe", "sei|sechs, du bist", "siamo|wir sind", "siete|ihr seid", "stato|gewesen, der Staat", "fatto|gemacht, die Tatsache", "detto|gesagt", "visto|gesehen", "dire|sagen", "andare|gehen", "potere|können, dürfen, die Macht", "volere|wollen", "dovere|müssen, sollen, die Pflicht", "sapere|wissen, können", "vedere|sehen", "venire|kommen", "stare|sein, bleiben, sich befinden", "dare|geben", "parlare|sprechen", "trovare|finden", "sentire|hören, fühlen", "prendere|nehmen", "pensare|denken", "lasciare|lassen, verlassen", "credere|glauben", "capire|verstehen", "mettere|setzen, legen, stellen", "guardare|anschauen", "chiamare|rufen, anrufen", "uscire|hinausgehen", "tornare|zurückkehren", "aspettare|warten", "cercare|suchen", "finire|beenden", "l'uomo|der Mann, der Mensch", "la donna|die Frau", "il giorno|der Tag", "la vita|das Leben", "il tempo|die Zeit, das Wetter", "la casa|das Haus, das Zuhause", "l'anno|das Jahr", "la volta|das Mal", "il signore|der Herr", "la signora|die Dame, Frau (Anrede)", "la persona|die Person", "la gente|die Leute", "grazie|danke", "prego|bitte (als Antwort), gern geschehen", "per favore|bitte", "ciao|hallo, tschüss", "buongiorno|guten Morgen, guten Tag", "buonasera|guten Abend", "arrivederci|auf Wiedersehen", "scusa|Entschuldigung", "oggi|heute", "domani|morgen", "ieri|gestern", "adesso|jetzt", "allora|also, dann", "forse|vielleicht", "proprio|genau, eigen", "davvero|wirklich", "certo|sicher, natürlich", "nuovo|neu", "grande|groß", "piccolo|klein", "buono|gut", "bello|schön", "vero|wahr", "altro|andere", "stesso|selbe", "primo|erste", "ultimo|letzte", "ogni|jeder, jede, jedes", "qualche|einige, ein paar", "tanto|so viel", "poco|wenig", "troppo|zu viel", "nessuno|niemand, kein", "qualcosa|etwas", "qualcuno|jemand", "fra|zwischen, in (zeitlich)", "tra|zwischen, unter", "su|auf, über", "senza|ohne", "dopo|nach, danach", "prima|vorher, zuerst", "sotto|unter", "sopra|über, oben", "dentro|drinnen", "fuori|draußen", "vicino|nah, neben", "lontano|weit, fern", "contro|gegen", "verso|in Richtung", "fino|bis", "durante|während", "però|aber, jedoch", "quindi|also, daher", "infatti|tatsächlich", "mentre|während", "oppure|oder auch", "invece|stattdessen", "almeno|mindestens", "quasi|fast", "subito|sofort", "presto|früh, bald", "tardi|spät", "insieme|zusammen", "meglio|besser", "peggio|schlechter", "male|schlecht, das Übel", "piano|langsam, leise", "via|weg", "là|dort", "lì|da, dort", "uno|eins", "due|zwei", "tre|drei", "quattro|vier", "cinque|fünf", "sette|sieben", "otto|acht", "nove|neun", "dieci|zehn", "undici|elf", "dodici|zwölf", "quindici|fünfzehn", "venti|zwanzig", "trenta|dreißig", "quaranta|vierzig", "cinquanta|fünfzig", "cento|hundert", "mille|tausend", "il milione|die Million", "mezzo|halb", "secondo|zweite, laut (gemäß)", "terzo|dritte", "il padre|der Vater", "la madre|die Mutter", "il figlio|der Sohn", "la figlia|die Tochter", "il fratello|der Bruder", "la sorella|die Schwester", "il marito|der Ehemann", "la moglie|die Ehefrau", "la famiglia|die Familie", "il bambino|das Kind (Junge)", "il ragazzo|der Junge, der Freund", "la ragazza|das Mädchen, die Freundin", "l'amico|der Freund", "l'amica|die Freundin", "il nonno|der Großvater", "la nonna|die Großmutter", "lo zio|der Onkel", "la zia|die Tante", "i genitori|die Eltern", "il cugino|der Cousin", "la testa|der Kopf", "l'occhio|das Auge", "la mano|die Hand", "il piede|der Fuß", "il braccio|der Arm", "la gamba|das Bein", "il cuore|das Herz", "la faccia|das Gesicht", "la bocca|der Mund", "il naso|die Nase", "l'orecchio|das Ohr", "i capelli|die Haare", "il corpo|der Körper", "il dente|der Zahn", "il collo|der Hals", "la schiena|der Rücken", "la pelle|die Haut", "il dito|der Finger", "il sangue|das Blut", "la voce|die Stimme", "l'ora|die Stunde", "il minuto|die Minute", "la settimana|die Woche", "il mese|der Monat", "la mattina|der Morgen", "la sera|der Abend", "la notte|die Nacht", "il pomeriggio|der Nachmittag", "il momento|der Moment", "il fine settimana|das Wochenende", "lunedì|Montag", "martedì|Dienstag", "mercoledì|Mittwoch", "giovedì|Donnerstag", "venerdì|Freitag", "sabato|Samstag", "domenica|Sonntag", "gennaio|Januar", "febbraio|Februar", "marzo|März", "aprile|April", "maggio|Mai", "giugno|Juni", "luglio|Juli", "agosto|August", "settembre|September", "ottobre|Oktober", "novembre|November", "dicembre|Dezember", "la primavera|der Frühling", "l'estate|der Sommer", "l'autunno|der Herbst", "l'inverno|der Winter", "la porta|die Tür", "la finestra|das Fenster", "la stanza|das Zimmer", "la camera|das Zimmer, das Schlafzimmer", "la cucina|die Küche", "il bagno|das Bad", "il letto|das Bett", "il tavolo|der Tisch", "la sedia|der Stuhl", "la chiave|der Schlüssel", "il muro|die Mauer, die Wand", "la scala|die Treppe, die Leiter", "il giardino|der Garten", "la città|die Stadt", "la strada|die Straße", "il paese|das Land, das Dorf", "la piazza|der Platz", "il negozio|der Laden", "la scuola|die Schule", "l'ufficio|das Büro", "la chiesa|die Kirche", "l'ospedale|das Krankenhaus", "la stazione|der Bahnhof", "il ristorante|das Restaurant", "l'albergo|das Hotel", "la banca|die Bank", "il mercato|der Markt", "il ponte|die Brücke", "il museo|das Museum", "il parco|der Park", "il centro|das Zentrum", "il mondo|die Welt", "il cibo|das Essen", "l'acqua|das Wasser", "il pane|das Brot", "il vino|der Wein", "il caffè|der Kaffee", "il latte|die Milch", "la carne|das Fleisch", "il pesce|der Fisch", "la frutta|das Obst", "la verdura|das Gemüse", "la mela|der Apfel", "il formaggio|der Käse", "l'uovo|das Ei", "la pasta|die Nudeln, der Teig", "il riso|der Reis", "la birra|das Bier", "lo zucchero|der Zucker", "il sale|das Salz", "l'olio|das Öl", "il pranzo|das Mittagessen", "la cena|das Abendessen", "la colazione|das Frühstück", "il gelato|das Eis", "il tè|der Tee", "il pollo|das Hähnchen", "il pomodoro|die Tomate", "la patata|die Kartoffel", "l'insalata|der Salat", "il dolce|der Nachtisch, süß", "il bicchiere|das Glas (zum Trinken)", "la bottiglia|die Flasche", "il piatto|der Teller, das Gericht", "il conto|die Rechnung", "il prezzo|der Preis", "i soldi|das Geld", "l'euro|der Euro", "il lavoro|die Arbeit", "il capo|der Chef, der Kopf", "l'azienda|das Unternehmen", "il medico|der Arzt", "il dottore|der Doktor, der Arzt", "l'avvocato|der Anwalt", "il professore|der Lehrer, der Professor", "lo studente|der Student", "il poliziotto|der Polizist", "la polizia|die Polizei", "il re|der König", "il dio|der Gott", "la guerra|der Krieg", "la pace|der Frieden", "la legge|das Gesetz", "il governo|die Regierung", "il presidente|der Präsident", "il popolo|das Volk", "la storia|die Geschichte", "la lingua|die Sprache, die Zunge", "la parola|das Wort", "la frase|der Satz", "la domanda|die Frage", "la risposta|die Antwort", "il nome|der Name", "il numero|die Nummer, die Zahl", "la lettera|der Brief, der Buchstabe", "il libro|das Buch", "la pagina|die Seite", "il giornale|die Zeitung", "la notizia|die Nachricht", "il telefono|das Telefon", "il cellulare|das Handy", "la macchina|das Auto, die Maschine", "l'auto|das Auto", "il treno|der Zug", "l'aereo|das Flugzeug", "la nave|das Schiff", "la bicicletta|das Fahrrad", "l'autobus|der Bus", "il viaggio|die Reise", "il biglietto|die Fahrkarte, das Ticket", "la vacanza|der Urlaub", "il mare|das Meer", "la montagna|der Berg", "il fiume|der Fluss", "il lago|der See", "la spiaggia|der Strand", "l'isola|die Insel", "il cielo|der Himmel", "il sole|die Sonne", "la luna|der Mond", "la stella|der Stern", "la terra|die Erde, das Land", "il fuoco|das Feuer", "l'aria|die Luft", "il vento|der Wind", "la pioggia|der Regen", "la neve|der Schnee", "l'albero|der Baum", "il fiore|die Blume", "il bosco|der Wald", "il campo|das Feld", "l'animale|das Tier", "il cane|der Hund", "il gatto|die Katze", "il cavallo|das Pferd", "l'uccello|der Vogel", "il colore|die Farbe", "bianco|weiß", "nero|schwarz", "rosso|rot", "verde|grün", "blu|blau", "giallo|gelb", "grigio|grau", "rosa|rosa, die Rose", "lungo|lang", "corto|kurz", "alto|hoch, groß", "basso|niedrig, klein", "pesante|schwer", "leggero|leicht", "facile|einfach", "difficile|schwierig", "veloce|schnell", "lento|langsam", "caldo|warm, heiß", "freddo|kalt", "pieno|voll", "vuoto|leer", "giovane|jung", "vecchio|alt", "ricco|reich", "povero|arm", "forte|stark", "debole|schwach", "felice|glücklich", "triste|traurig", "contento|zufrieden", "stanco|müde", "malato|krank", "sano|gesund", "pronto|bereit, hallo (am Telefon)", "libero|frei", "importante|wichtig", "possibile|möglich", "impossibile|unmöglich", "necessario|notwendig", "giusto|richtig, gerecht", "sbagliato|falsch", "chiaro|klar, hell", "caro|lieb, teuer", "pulito|sauber", "sporco|schmutzig", "aperto|offen", "chiuso|geschlossen", "dolce|süß", "gentile|freundlich, nett", "simpatico|sympathisch", "bravo|tüchtig, brav", "cattivo|böse, schlecht", "strano|seltsam", "famoso|berühmt", "sicuro|sicher", "pericoloso|gefährlich", "tranquillo|ruhig", "diverso|verschieden", "uguale|gleich", "intero|ganz", "unico|einzig", "solito|üblich", "prossimo|nächste", "pubblico|öffentlich", "naturale|natürlich", "politico|politisch", "sociale|sozial", "italiano|italienisch, der Italiener", "straniero|ausländisch, der Ausländer", "speciale|besonders", "normale|normal", "reale|wirklich, echt", "umano|menschlich", "interessante|interessant", "bisogno|das Bedürfnis", "avere bisogno di|brauchen", "piacere|gefallen, das Vergnügen", "mi piace|es gefällt mir", "amare|lieben", "l'amore|die Liebe", "odiare|hassen", "vivere|leben", "morire|sterben", "la morte|der Tod", "nascere|geboren werden", "mangiare|essen", "bere|trinken", "dormire|schlafen", "alzarsi|aufstehen", "lavorare|arbeiten", "studiare|lernen, studieren", "imparare|lernen", "insegnare|unterrichten", "leggere|lesen", "scrivere|schreiben", "ascoltare|zuhören", "rispondere|antworten", "chiedere|fragen, bitten", "spiegare|erklären", "raccontare|erzählen", "ricordare|erinnern", "dimenticare|vergessen", "conoscere|kennen", "sembrare|scheinen", "diventare|werden", "restare|bleiben", "rimanere|bleiben", "entrare|eintreten", "partire|abfahren", "arrivare|ankommen", "passare|vorbeigehen, verbringen", "correre|laufen, rennen", "salire|hinaufgehen, einsteigen", "scendere|hinuntergehen, aussteigen", "cadere|fallen", "portare|bringen, tragen", "mandare|schicken", "ricevere|bekommen", "comprare|kaufen", "vendere|verkaufen", "pagare|bezahlen", "aprire|öffnen", "chiudere|schließen", "cominciare|anfangen", "continuare|weitermachen", "smettere|aufhören", "fermare|anhalten", "cambiare|ändern, wechseln", "provare|versuchen, anprobieren", "riuscire|schaffen, gelingen", "perdere|verlieren", "vincere|gewinnen", "giocare|spielen", "ridere|lachen", "aiutare|helfen", "usare|benutzen", "servire|dienen, nötig sein", "bastare|genügen", "mancare|fehlen", "succedere|passieren", "decidere|entscheiden", "scegliere|wählen", "preferire|bevorzugen", "sperare|hoffen", "avere paura|Angst haben", "la paura|die Angst", "incontrare|treffen", "salutare|grüßen", "toccare|berühren", "tenere|halten", "girare|drehen, abbiegen", "seguire|folgen", "guidare|fahren, lenken", "viaggiare|reisen", "cucinare|kochen", "pulire|putzen", "vestirsi|sich anziehen", "mostrare|zeigen", "rompere|zerbrechen", "costruire|bauen", "creare|erschaffen", "crescere|wachsen", "accettare|annehmen", "permettere|erlauben", "promettere|versprechen", "ringraziare|danken", "offrire|anbieten", "considerare|betrachten", "immaginare|sich vorstellen", "sognare|träumen", "il sogno|der Traum", "desiderare|wünschen", "il desiderio|der Wunsch", "preparare|vorbereiten", "controllare|kontrollieren", "risolvere|lösen", "abitare|wohnen", "uccidere|töten", "salvare|retten", "mentire|lügen", "la bugia|die Lüge", "la verità|die Wahrheit", "il problema|das Problem", "la soluzione|die Lösung", "la ragione|der Grund, die Vernunft", "avere ragione|recht haben", "il motivo|der Grund", "la causa|die Ursache", "l'idea|die Idee", "il pensiero|der Gedanke", "l'opinione|die Meinung", "la decisione|die Entscheidung", "la scelta|die Wahl", "la possibilità|die Möglichkeit", "l'occasione|die Gelegenheit", "il modo|die Art, die Weise", "il caso|der Fall, der Zufall", "la cosa|die Sache, das Ding", "il fatto|die Tatsache", "la parte|der Teil", "il punto|der Punkt", "il posto|der Ort, der Platz", "il luogo|der Ort", "la fine|das Ende", "l'inizio|der Anfang", "il lato|die Seite", "il gruppo|die Gruppe", "la squadra|die Mannschaft", "la partita|das Spiel (Match)", "il gioco|das Spiel", "lo sport|der Sport", "il calcio|der Fußball", "la palla|der Ball", "la musica|die Musik", "la canzone|das Lied", "il film|der Film", "la foto|das Foto", "l'immagine|das Bild", "l'arte|die Kunst", "la festa|das Fest, die Party", "il regalo|das Geschenk", "il compleanno|der Geburtstag", "la lezione|die Lektion, die Stunde", "l'esame|die Prüfung", "l'università|die Universität", "la penna|der Kuli, die Feder", "la carta|das Papier, die Karte", "la borsa|die Tasche", "il vestito|das Kleid, der Anzug", "la camicia|das Hemd", "i pantaloni|die Hose", "la scarpa|der Schuh", "la giacca|die Jacke", "l'orologio|die Uhr", "la salute|die Gesundheit", "la malattia|die Krankheit", "il dolore|der Schmerz", "la medicina|die Medizin", "l'incidente|der Unfall", "l'aiuto|die Hilfe", "il pericolo|die Gefahr", "la sicurezza|die Sicherheit", "la libertà|die Freiheit", "il diritto|das Recht", "il dovere|die Pflicht", "il bene|das Gute", "il male|das Böse, der Schmerz", "la forza|die Kraft", "il potere|die Macht", "il servizio|der Dienst, der Service", "il progetto|das Projekt", "il piano|der Plan, das Stockwerk", "il risultato|das Ergebnis", "il successo|der Erfolg", "l'errore|der Fehler", "l'esempio|das Beispiel", "il messaggio|die Nachricht", "l'informazione|die Information", "la natura|die Natur", "la cultura|die Kultur", "la politica|die Politik", "l'economia|die Wirtschaft", "lo stato|der Staat, der Zustand", "l'Italia|Italien", "la Svizzera|die Schweiz", "destra|rechts", "sinistra|links", "davanti|vorne, vor", "dietro|hinten, hinter", "attraverso|durch", "secondo me|meiner Meinung nach", "per esempio|zum Beispiel", "d'accordo|einverstanden", "va bene|in Ordnung", "non c'è problema|kein Problem", "di solito|normalerweise", "di nuovo|wieder", "a volte|manchmal", "spesso|oft", "ogni tanto|ab und zu", "finalmente|endlich", "purtroppo|leider", "naturalmente|natürlich", "veramente|wirklich", "soprattutto|vor allem", "sicuramente|sicherlich", "probabilmente|wahrscheinlich", "abbastanza|ziemlich, genug", "piuttosto|eher, ziemlich", "appena|gerade, kaum, sobald", "ormai|inzwischen, mittlerweile", "cioè|das heißt", "comunque|jedenfalls, trotzdem", "dunque|also", "inoltre|außerdem", "neanche|nicht einmal, auch nicht", "nemmeno|nicht einmal", "né|weder, noch", "poiché|da, weil", "perciò|deshalb", "tuttavia|dennoch", "tranne|außer", "ecco|hier ist, da ist", "magari|vielleicht, hoffentlich", "dai|komm schon", "basta|genug, Schluss", "peccato|schade", "attenzione|Achtung, die Aufmerksamkeit", "benvenuto|willkommen", "auguri|Glückwünsche", "complimenti|Glückwunsch, Kompliment", "quale|welcher", "quanto|wie viel", "quanti|wie viele", "come mai|wieso", "che cosa|was", "qual è|welcher ist", "alcuni|einige", "tutti|alle", "qualsiasi|beliebig, irgendein", "il resto|der Rest", "la metà|die Hälfte", "il doppio|das Doppelte", "la quantità|die Menge", "il metro|der Meter", "l'altezza|die Höhe", "la velocità|die Geschwindigkeit", "il secolo|das Jahrhundert", "il passato|die Vergangenheit", "il presente|die Gegenwart", "il futuro|die Zukunft", "la data|das Datum", "l'appuntamento|der Termin, die Verabredung", "la riunione|die Sitzung", "il ritardo|die Verspätung", "in ritardo|zu spät", "in anticipo|zu früh", "puntuale|pünktlich", "la fretta|die Eile", "avere fretta|es eilig haben", "la calma|die Ruhe", "il silenzio|die Stille", "il rumore|der Lärm", "il suono|der Klang", "la luce|das Licht", "l'ombra|der Schatten", "il buio|die Dunkelheit", "l'odore|der Geruch", "il gusto|der Geschmack", "la fame|der Hunger", "avere fame|Hunger haben", "la sete|der Durst", "avere sete|Durst haben", "il sonno|der Schlaf", "avere sonno|müde sein", "il freddo|die Kälte", "avere freddo|frieren", "il caldo|die Hitze", "avere caldo|warm haben, schwitzen", "la gioia|die Freude", "la felicità|das Glück", "la tristezza|die Traurigkeit", "la rabbia|die Wut", "la speranza|die Hoffnung", "la fiducia|das Vertrauen", "il coraggio|der Mut", "la pazienza|die Geduld", "la fortuna|das Glück (Zufall)", "il destino|das Schicksal", "l'anima|die Seele", "lo spirito|der Geist", "la mente|der Verstand", "la memoria|das Gedächtnis", "il ricordo|die Erinnerung", "il sentimento|das Gefühl", "l'emozione|die Emotion", "il rapporto|die Beziehung, der Bericht", "la relazione|die Beziehung", "il matrimonio|die Hochzeit, die Ehe", "il fidanzato|der Verlobte, fester Freund", "la fidanzata|die Verlobte, feste Freundin", "il vicino|der Nachbar", "l'ospite|der Gast", "il cliente|der Kunde", "il collega|der Kollege", "il nemico|der Feind", "lo straniero|der Fremde", "l'adulto|der Erwachsene", "l'anziano|der ältere Mensch", "l'appartamento|die Wohnung", "l'affitto|die Miete", "il palazzo|das Gebäude, der Palast", "l'edificio|das Gebäude", "la televisione|der Fernseher", "il computer|der Computer", "internet|das Internet", "lo schermo|der Bildschirm", "la rete|das Netz", "il sito|die Webseite", "la mail|die E-Mail", "il programma|das Programm", "la posta|die Post", "l'indirizzo|die Adresse", "il documento|das Dokument", "il passaporto|der Reisepass", "la carta d'identità|der Personalausweis", "la patente|der Führerschein", "il contratto|der Vertrag", "la firma|die Unterschrift", "firmare|unterschreiben", "lo stipendio|das Gehalt", "il costo|die Kosten", "il supermercato|der Supermarkt", "la farmacia|die Apotheke", "il bar|die Bar, das Café", "la pizzeria|die Pizzeria", "il menù|die Speisekarte", "il cameriere|der Kellner", "l'aeroporto|der Flughafen", "la fermata|die Haltestelle", "l'uscita|der Ausgang", "l'entrata|der Eingang", "il traffico|der Verkehr", "il turista|der Tourist", "la valigia|der Koffer", "la prenotazione|die Reservierung", "prenotare|reservieren", "la campagna|das Land (ländlich)", "la pietra|der Stein", "la pianta|die Pflanze", "il frutto|die Frucht", "il limone|die Zitrone", "la banana|die Banane", "l'uva|die Trauben", "la fragola|die Erdbeere", "il prosciutto|der Schinken", "la salsiccia|die Wurst", "la torta|der Kuchen", "il cioccolato|die Schokolade", "il succo|der Saft", "il panino|das Brötchen, das Sandwich", "l'aperitivo|der Aperitif", "il maiale|das Schwein", "il leone|der Löwe", "l'orso|der Bär", "il lupo|der Wolf", "indietro|zurück", "avanti|vorwärts, herein!", "giù|unten, hinunter", "su!|los!, auf!", "ovunque|überall", "qua|hier", "stasera|heute Abend", "stamattina|heute Morgen", "stanotte|heute Nacht", "dopodomani|übermorgen", "fra poco|gleich, bald", "tra un po'|in einer Weile", "una volta|einmal, früher", "ancora una volta|noch einmal", "per sempre|für immer", "alla fine|am Ende", "all'inizio|am Anfang", "in fretta|schnell, eilig", "a piedi|zu Fuß", "in macchina|mit dem Auto", "in treno|mit dem Zug", "a casa|zu Hause, nach Hause", "in centro|in der Innenstadt", "al mare|am Meer, ans Meer", "in montagna|in den Bergen", "a destra|rechts", "a sinistra|links", "sempre dritto|immer geradeaus", "di fronte|gegenüber", "in mezzo|in der Mitte", "in fondo|im Grunde, hinten", "in realtà|in Wirklichkeit", "in ogni caso|auf jeden Fall", "in effetti|tatsächlich", "per caso|zufällig", "per fortuna|zum Glück", "per niente|überhaupt nicht", "non ancora|noch nicht", "non più|nicht mehr", "sono d'accordo|ich bin einverstanden", "non lo so|ich weiß es nicht", "non capisco|ich verstehe nicht", "come stai?|wie geht es dir?", "sto bene|mir geht es gut", "come ti chiami?|wie heißt du?", "mi chiamo|ich heiße", "quanto costa?|wie viel kostet es?", "che ore sono?|wie spät ist es?", "dov'è?|wo ist?", "parla inglese?|sprechen Sie Englisch?", "piacere!|freut mich!", "buona notte|gute Nacht", "a presto|bis bald", "a domani|bis morgen", "buon appetito|guten Appetit", "buona fortuna|viel Glück", "in bocca al lupo|toi, toi, toi", "mamma mia|meine Güte", "che bello|wie schön", "figurati|keine Ursache, stell dir vor", "dimmi|sag mal", "senti|hör mal", "guarda|schau", "aspetta|warte", "vieni|komm", "andiamo|gehen wir", "facciamo|machen wir", "vediamo|mal sehen", "ho capito|ich habe verstanden", "ho fame|ich habe Hunger", "ho sete|ich habe Durst", "sono stanco|ich bin müde", "è vero|das stimmt", "non è vero|das stimmt nicht", "è tardi|es ist spät", "fa freddo|es ist kalt", "fa caldo|es ist heiß", "piove|es regnet", "nevica|es schneit", "c'è il sole|die Sonne scheint", "può darsi|kann sein", "pazienza|macht nichts, Geduld", "tocca a te|du bist dran", "dipende|es kommt darauf an", "il bello|das Schöne", "il brutto|das Hässliche", "brutto|hässlich", "carino|hübsch, nett", "divertente|lustig, unterhaltsam", "noioso|langweilig", "pazzo|verrückt", "arrabbiato|wütend", "nervoso|nervös", "preoccupato|besorgt", "sorpreso|überrascht", "innamorato|verliebt", "intelligente|intelligent", "stupido|dumm", "onesto|ehrlich", "serio|ernst", "allegro|fröhlich", "duro|hart", "fresco|frisch, kühl", "buonissimo|sehr gut, köstlich", "pessimo|sehr schlecht", "ottimo|ausgezeichnet", "migliore|besser, beste", "peggiore|schlechter, schlechteste", "maggiore|größer, älter", "minore|kleiner, jünger", "recente|neu, kürzlich", "antico|antik, alt", "moderno|modern", "attuale|aktuell", "europeo|europäisch", "svizzero|schweizerisch, der Schweizer", "tedesco|deutsch, der Deutsche", "francese|französisch", "inglese|englisch", "la cittadinanza|die Staatsbürgerschaft", "la religione|die Religion"];
+const W=RAW.map((s,i)=>{const [it,de]=s.split('|');return{i,it,de}});
+const LV=[{n:'Neu',c:'#b9aeb1'},{n:'Lernen',c:'#e5533f'},{n:'Schwach',c:'#f39c38'},{n:'Mittel',c:'#f6c445'},{n:'Gut',c:'#7cc576'},{n:'Sitzt',c:'#1d9a55'}];
+const $=id=>document.getElementById(id);
+let S={b:{},u:{},r:0,dir:'it',pack:'all',weak:false};
+try{const x=JSON.parse(localStorage.getItem('mille')||'null');if(x)S=Object.assign(S,x)}catch(e){}
+const save=()=>{try{localStorage.setItem('mille',JSON.stringify(S))}catch(e){}};
+const box=i=>S.b[i]||0;
+const setBox=(i,v)=>{S.b[i]=Math.max(0,Math.min(5,v));S.u[i]=Date.now();save();prog();queueSync()};
+
+// ---------- sync (Server: /api/progress) ----------
+if(!S.u)S.u={};if(!S.r)S.r=0;
+let syncT=null,syncing=false,dirty=false;
+const pad=n=>String(n).padStart(2,'0');
+function syncMsg(m){const el=document.getElementById('sync');if(el)el.innerHTML=m}
+function merge(srv){
+ if(!srv||typeof srv.b!=='object')return false;
+ const r=Math.max(S.r||0,srv.r||0);let changed=r!==S.r;
+ if(r>S.r){for(const k of Object.keys(S.b))if((S.u[k]||0)<r){delete S.b[k];delete S.u[k];changed=true}}
+ S.r=r;
+ for(const k of Object.keys(srv.b)){const t=srv.u[k]||0;if(t<r)continue;
+  if(S.b[k]===undefined||t>(S.u[k]||0)){if(S.b[k]!==srv.b[k])changed=true;S.b[k]=srv.b[k];S.u[k]=t}}
+ return changed;
+}
+async function sync(){
+ if(syncing){dirty=true;return}
+ syncing=true;dirty=false;
+ try{
+  const g=await fetch('/api/progress',{cache:'no-store',credentials:'same-origin'});
+  if(g.status===401)throw new Error('auth');
+  if(!g.ok)throw new Error('net');
+  const changed=merge(await g.json());save();
+  const p=await fetch('/api/progress',{method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({b:S.b,u:S.u,r:S.r})});
+  if(p.status===401)throw new Error('auth');
+  if(!p.ok)throw new Error('net');
+  if(merge(await p.json())||changed){save();prog();if(view==='liste')list()}
+  const d=new Date();syncMsg(`Synchronisiert um ${pad(d.getHours())}:${pad(d.getMinutes())}`);
+ }catch(e){
+  syncMsg(e.message==='auth'?'Sitzung abgelaufen – <a class="logout" href="/">neu anmelden</a>':(navigator.onLine?'Sync fehlgeschlagen – neuer Versuch folgt':'Offline – wird später synchronisiert'));
+ }finally{syncing=false;if(dirty)queueSync()}
+}
+function queueSync(){clearTimeout(syncT);syncT=setTimeout(sync,1500)}
+function flush(){if(!syncT)return;clearTimeout(syncT);syncT=null;
+ try{fetch('/api/progress',{method:'PUT',keepalive:true,credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({b:S.b,u:S.u,r:S.r})})}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)flush();else sync()});
+window.addEventListener('pagehide',flush);
+window.addEventListener('online',sync);
+setInterval(()=>{if(!document.hidden)sync()},60000);
+
+// ---------- normalisation ----------
+const deacc=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'');
+const clean=s=>s.toLowerCase().replace(/\([^)]*\)/g,' ').replace(/[?!¿¡.«»"]/g,' ').replace(/’/g,"'").replace(/\s+/g,' ').trim();
+const ITART=/^(il|lo|la|i|gli|le|un|uno|una|un')\s+|^l'/;
+const DEART=/^(der|die|das|ein|eine|einen|zu)\s+/;
+const altsIt=w=>{const c=clean(w.it);return[c,c.replace(ITART,'')]};
+const altsDe=w=>{const out=new Set();w.de.split(/,|\//).forEach(p=>{const c=clean(p);if(!c)return;out.add(c);out.add(c.replace(DEART,''))});return[...out]};
+function check(input,alts){
+ const a=clean(input),aa=a.replace(ITART,'').replace(DEART,'');
+ if(!a)return 0;
+ for(const t of alts){if(a===t||aa===t)return 2}
+ for(const t of alts){if(deacc(a)===deacc(t)||deacc(aa)===deacc(t))return 1}
+ return 0;
+}
+
+// ---------- pool ----------
+const packSel=$('pack');
+packSel.innerHTML='<option value="all">Alle 1000</option>'+Array.from({length:10},(_,k)=>`<option value="${k}">${k*100+1}–${k*100+100}</option>`).join('');
+packSel.value=S.pack;
+function pool(){
+ let p=S.pack==='all'?W:W.slice(+S.pack*100,+S.pack*100+100);
+ if(S.weak){const w=p.filter(x=>box(x.i)<4);if(w.length)p=w}
+ return p;
+}
+let recent=[];
+function pick(){
+ const p=pool();
+ const fresh=p.filter(x=>S.b[x.i]===undefined).slice(0,8);
+ const base=p.filter(x=>S.b[x.i]!==undefined).concat(fresh);
+ const cand=base.filter(x=>!recent.includes(x.i));
+ const use=cand.length?cand:(base.length?base:p);
+ // weight: lower boxes far more likely; unseen words favoured in rank order
+ let tot=0;const wts=use.map(x=>{const b=box(x.i);const w=b===0?(S.b[x.i]===undefined?3:6):[6,5,3,1.5,.6,.25][b];tot+=w;return w});
+ let r=Math.random()*tot,k=0;for(;k<use.length-1;k++){r-=wts[k];if(r<=0)break}
+ const w=use[k];recent.push(w.i);if(recent.length>Math.min(8,Math.floor(p.length/2)))recent.shift();
+ return w;
+}
+const ask=w=>S.dir==='it'?w.it:w.de;
+const ans=w=>S.dir==='it'?w.de:w.it;
+
+// ---------- speech ----------
+let voice=null;
+function loadV(){try{const v=speechSynthesis.getVoices();voice=v.find(x=>/^it/i.test(x.lang))||null}catch(e){}}
+const canSpeak='speechSynthesis' in window;
+if(canSpeak){loadV();try{speechSynthesis.onvoiceschanged=loadV}catch(e){}}
+function speak(t,rate){if(!canSpeak)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/\([^)]*\)/g,''));u.lang='it-IT';if(voice)u.voice=voice;u.rate=rate||.9;speechSynthesis.speak(u)}catch(e){}}
+
+// ---------- progress ----------
+function prog(){
+ const c=[0,0,0,0,0,0];W.forEach(w=>c[box(w.i)]++);
+ const seen=W.filter(w=>S.b[w.i]!==undefined).length;
+ $('prog').innerHTML=`<b>${c[5]}</b> <small>von 1000 sitzen · ${seen} gesehen</small>
+ <div class="bar">${c.map((n,k)=>k?`<span style="width:${n/10}%;background:${LV[k].c}"></span>`:'').join('')}</div>
+ <div class="legend">${LV.slice(1).map((l,k)=>`<span><i style="background:${l.c}"></i>${l.n} ${c[k+1]}</span>`).join('')}</div>`;
+}
+
+// ---------- flashcards ----------
+let cur=null;
+function card(){
+ cur=pick();const f=$('flip');f.classList.remove('on');
+ const b=box(cur.i),seen=S.b[cur.i]!==undefined;
+ const fr=S.dir==='it'?`<div class="word it">${cur.it}</div>`:`<div class="de">${cur.de}</div>`;
+ const bk=S.dir==='it'?`<div class="de">${cur.de}</div><div class="hint it" style="font-size:22px">${cur.it}</div>`:`<div class="word it">${cur.it}</div><div class="hint">${cur.de}</div>`;
+ setTimeout(()=>{$('fTxt').innerHTML=fr;$('bTxt').innerHTML=bk},f.classList.contains('on')?250:0);
+ $('fRank').textContent=$('bRank').textContent='#'+(cur.i+1);
+ const lv=seen?LV[b]:LV[0];$('fLvl').innerHTML=`<span class="dot" style="background:${lv.c}"></span> ${lv.n}`;
+ if(S.dir==='it'&&autoSpeak)speak(cur.it);
+}
+let autoSpeak=false;
+$('flip').addEventListener('click',e=>{if(e.target.closest('.say'))return;flipIt()});
+$('flip').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();flipIt()}});
+function flipIt(){const f=$('flip');f.classList.toggle('on');if(f.classList.contains('on')&&S.dir==='de')speak(cur.it)}
+document.querySelectorAll('.say').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();speak(cur.it)}));
+document.querySelectorAll('.rate button').forEach(b=>b.addEventListener('click',()=>rate(+b.dataset.r)));
+function rate(r){const b=box(cur.i);setBox(cur.i,r===0?1:r===1?Math.max(2,b):Math.max(b+1,b===0?3:b+1));autoSpeak=true;card()}
+
+// ---------- writing ----------
+const ACC=['à','è','é','ì','ò','ù'],ACCDE=['ä','ö','ü','ß'];
+function accBar(el,inp,list){el.innerHTML=list.map(a=>`<button type="button">${a}</button>`).join('');el.querySelectorAll('button').forEach(b=>b.onclick=()=>{const s=inp.selectionStart??inp.value.length;inp.value=inp.value.slice(0,s)+b.textContent+inp.value.slice(inp.selectionEnd??s);inp.focus();inp.setSelectionRange(s+1,s+1)})}
+let wCur=null,wDone=false,wOk=0,wNo=0;
+function wNext(){wCur=pick();wDone=false;$('wQ').textContent=ask(wCur);$('wQ').className='word'+(S.dir==='it'?' it':'');
+ $('wDir').textContent=S.dir==='it'?'Auf Deutsch:':'Auf Italienisch:';$('wIn').value='';$('wIn').placeholder=S.dir==='it'?'Deutsche Übersetzung':'Italienisches Wort';
+ $('wFb').className='fb';$('wBtn').textContent='Prüfen';accBar($('wAcc'),$('wIn'),S.dir==='it'?ACCDE:ACC);if(view==='schreiben')$('wIn').focus({preventScroll:true})}
+function wCheck(give){
+ if(wDone){wNext();return}
+ const r=give?0:check($('wIn').value,S.dir==='it'?altsDe(wCur):altsIt(wCur));
+ const fb=$('wFb');wDone=true;$('wBtn').textContent='Weiter';
+ const sol=`<b>${S.dir==='it'?wCur.de:wCur.it}</b>`;
+ if(r===2){fb.className='fb ok';fb.innerHTML='Richtig! '+sol;wOk++;setBox(wCur.i,box(wCur.i)+1)}
+ else if(r===1){fb.className='fb mid';fb.innerHTML='Fast – achte auf die Akzente: '+sol;wOk++;setBox(wCur.i,Math.max(2,box(wCur.i)))}
+ else{fb.className='fb no';fb.innerHTML=(give?'Lösung: ':'Leider nicht. Richtig: ')+sol;wNo++;setBox(wCur.i,1)}
+ speak(wCur.it);$('wOk').textContent=wOk;$('wNo').textContent=wNo;$('wBtn').focus({preventScroll:true});
+}
+$('wForm').addEventListener('submit',e=>{e.preventDefault();wCheck(false)});
+$('wSkip').onclick=()=>{if(!wDone)wCheck(true);else wNext()};
+
+// ---------- quiz ----------
+let qCur=null,qDone=false,qOk=0,qNo=0,qStr=0,qList=[];
+function qNext(){qCur=pick();qDone=false;const p=pool().length>=4?pool():W;
+ const set=new Set([qCur.i]);const o=[qCur];let g=0;
+ while(o.length<4&&g++<200){const x=p[Math.floor(Math.random()*p.length)];if(!set.has(x.i)&&ans(x)!==ans(qCur)){set.add(x.i);o.push(x)}}
+ qList=o.sort(()=>Math.random()-.5);
+ $('qDir').textContent=S.dir==='it'?'Was bedeutet …':'Wie sagt man auf Italienisch …';
+ $('qQ').textContent=ask(qCur);$('qQ').className='word'+(S.dir==='it'?' it':'');
+ $('qOpts').innerHTML=qList.map((x,k)=>`<button data-k="${k}" class="${S.dir==='de'?'it':''}" style="${S.dir==='de'?'font-size:24px':''}">${ans(x)}</button>`).join('');
+ $('qOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>qPick(+b.dataset.k));
+ if(S.dir==='it'&&qAuto)speak(qCur.it);
+}
+let qAuto=false;
+function qPick(k){
+ if(qDone){qNext();return}qDone=true;qAuto=true;
+ const bs=$('qOpts').querySelectorAll('button');const right=qList.indexOf(qCur);
+ bs[right].classList.add('r');
+ if(k===right){qOk++;qStr++;setBox(qCur.i,box(qCur.i)+1)}else{bs[k].classList.add('w');qNo++;qStr=0;setBox(qCur.i,1)}
+ $('qOk').textContent=qOk;$('qNo').textContent=qNo;$('qStr').textContent=qStr;
+ if(S.dir==='de')speak(qCur.it);
+ setTimeout(()=>{if(qDone&&view==='quiz')qNext()},k===right?900:2200);
+}
+
+// ---------- listening ----------
+let hCur=null,hDone=false,hOk=0,hNo=0;
+function hNext(){hCur=pick();hDone=false;$('hIn').value='';$('hFb').className='fb';$('hBtn').textContent='Prüfen';accBar($('hAcc'),$('hIn'),ACC)}
+function hCheck(){
+ if(hDone){hNext();speak(hCur.it);$('hIn').focus({preventScroll:true});return}
+ const r=check($('hIn').value,altsIt(hCur));hDone=true;$('hBtn').textContent='Weiter';const fb=$('hFb');
+ const sol=`<b class="it" style="font-size:22px">${hCur.it}</b> = ${hCur.de}`;
+ if(r===2){fb.className='fb ok';fb.innerHTML='Perfetto! '+sol;hOk++;setBox(hCur.i,box(hCur.i)+1)}
+ else if(r===1){fb.className='fb mid';fb.innerHTML='Fast – Akzente beachten: '+sol;hOk++}
+ else{fb.className='fb no';fb.innerHTML='Gehört wurde: '+sol;hNo++;setBox(hCur.i,1)}
+ $('hOk').textContent=hOk;$('hNo').textContent=hNo;$('hBtn').focus({preventScroll:true});
+}
+$('hForm').addEventListener('submit',e=>{e.preventDefault();hCheck()});
+$('hPlay').onclick=()=>{speak(hCur.it);$('hIn').focus({preventScroll:true})};
+$('hSlow').onclick=()=>speak(hCur.it,.55);
+if(!canSpeak)$('hNote').textContent='Dein Browser unterstützt keine Sprachausgabe – Hören funktioniert hier leider nicht.';
+
+// ---------- list ----------
+const SPK=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>`;
+function list(){
+ const q=deacc($('lSearch').value.toLowerCase().trim());
+ const p=(S.pack==='all'?W:W.slice(+S.pack*100,+S.pack*100+100)).filter(w=>!q||deacc(w.it.toLowerCase()).includes(q)||deacc(w.de.toLowerCase()).includes(q));
+ $('lCnt').textContent=p.length+' Wörter';
+ $('lBody').innerHTML=p.length?p.map(w=>{const b=box(w.i),lv=S.b[w.i]===undefined?LV[0]:LV[b];return`<tr><td class="n hide-s">${w.i+1}</td><td><span class="dot" style="background:${lv.c}" title="${lv.n}"></span> <span class="it">${w.it}</span></td><td>${w.de}</td><td><button class="mini" data-s="${w.i}" aria-label="anhören">${SPK}</button></td><td><button class="k ${b===5?'on':''}" data-k="${w.i}">${b===5?'Sitzt ✓':'Kenne ich'}</button></td></tr>`}).join(''):'<tr><td colspan="5" class="empty">Nichts gefunden.</td></tr>';
+}
+$('lBody').addEventListener('click',e=>{const s=e.target.closest('[data-s]'),k=e.target.closest('[data-k]');
+ if(s)speak(W[+s.dataset.s].it);
+ if(k){const i=+k.dataset.k;setBox(i,box(i)===5?1:5);list()}});
+$('lSearch').addEventListener('input',list);
+
+// ---------- controls / routing ----------
+document.querySelectorAll('#dir button').forEach(b=>{b.classList.toggle('on',b.dataset.d===S.dir);b.onclick=()=>{S.dir=b.dataset.d;save();document.querySelectorAll('#dir button').forEach(x=>x.classList.toggle('on',x===b));refresh()}});
+packSel.onchange=()=>{S.pack=packSel.value;recent=[];save();refresh()};
+$('weak').checked=S.weak;$('weak').onchange=()=>{S.weak=$('weak').checked;save();refresh()};
+let view='karten';
+function refresh(){
+ if(view==='karten')card();else if(view==='schreiben')wNext();else if(view==='quiz')qNext();else if(view==='hoeren')hNext();else list();
+}
+function route(){
+ const v=(location.hash||'#karten').slice(1);view=['karten','schreiben','quiz','hoeren','liste'].includes(v)?v:'karten';
+ document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id==='v-'+view));
+ document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===view));
+ $('dir').style.display=view==='hoeren'||view==='liste'?'none':'';
+ $('weak').parentElement.style.display=view==='liste'?'none':'';
+ refresh();
+}
+window.addEventListener('hashchange',route);
+document.addEventListener('keydown',e=>{
+ if(e.target.matches('input,select,textarea'))return;
+ if(view==='karten'){if(e.key===' '){e.preventDefault();flipIt()}else if(['1','2','3'].includes(e.key))rate(+e.key-1);else if(e.key==='s'||e.key==='S')speak(cur.it)}
+ if(view==='quiz'){if(['1','2','3','4'].includes(e.key))qPick(+e.key-1);else if(e.key==='Enter'&&qDone)qNext()}
+});
+let armed=false;
+$('reset').onclick=()=>{const b=$('reset');if(!armed){armed=true;b.textContent='Wirklich alles löschen?';b.classList.add('b');setTimeout(()=>{armed=false;b.textContent='Fortschritt zurücksetzen';b.classList.remove('b')},4000);return}
+ S.b={};S.u={};S.r=Date.now();save();sync();armed=false;b.textContent='Fortschritt zurücksetzen';b.classList.remove('b');prog();refresh()};
+prog();route();sync();
+}
+</script>
+</body>
+</html>
